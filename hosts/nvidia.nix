@@ -7,15 +7,14 @@
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.nvidia = {
-    # Use stable proprietary driver — best for gaming.
     # Alternatives:
     #   config.boot.kernelPackages.nvidiaPackages.beta
     #   config.boot.kernelPackages.nvidiaPackages.open  (open kernel module, Turing+)
-    package            = config.boot.kernelPackages.nvidiaPackages.stable;
+    package            = config.boot.kernelPackages.nvidiaPackages.open;
     modesetting.enable = true;
-    open               = false;   # set true for Turing+ if you prefer the open module
+    open               = true;        # set true for Turing+ if you prefer the open module
     nvidiaSettings     = true;
-    powerManagement.enable = false;   # enable on laptops
+    powerManagement.enable = true;    # enable on laptops
   };
 
   hardware.graphics = {

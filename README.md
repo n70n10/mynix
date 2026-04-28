@@ -6,17 +6,17 @@ Flake-based NixOS config with Fish shell, KDE Plasma 6, and devshells for Go and
 
 ```
 # 1. Clone
-git clone git@github.com:n70n10/mynix.git
-cd mynix
+git clone git@github.com:n70n10/my-nix.git
+cd my-nix
 
-# 2. Fill in your personal data (includes git identity)
-$EDITOR ./nixsec/secrets.nix
+# 2. Deploy to /etc/nixos
+./deploy
 
-# 3. Generate hardware config (if not present)
-nixos-generate-config --show-hardware-config | tee ./nixsec/hardware-configuration.nix > /dev/null
+# 3. Fill in your personal data
+$EDITOR /etc/nixos/nixsec/secrets.nix
 
-# 4. ***IMPORTANT*** mark nixsec files as unchanged!
-git ls-files -z ./nixsec | xargs -0 git update-index --assume-unchanged
+# 4. Generate hardware config (if not present)
+nixos-generate-config --show-hardware-config | sudo tee /etc/nixos/nixsec/hardware-configuration.nix > /dev/null
 
 # 5. Build, switch, and activate Home Manager (may need #<hostmane> the 1st time)
 sudo nixos-rebuild switch --flake /etc/nixos
@@ -28,27 +28,25 @@ sudo nixos-rebuild switch --flake /etc/nixos
 .
 ├── flake.nix                          # Entrypoint
 ├── home.nix                           # Home Manager config (dotfiles, git, fish)
-├── git
-│   └── git.nix                        # Git config
-├── secrets.nix.example                # Template — commit this
-├── deploy.sh                          # Syncs repo → /etc/nixos
-├── .gitignore
+├── home
+│   ├── git.nix                        # Git config
+│   └── linkfactory.nix                # Helper to create symlinks for dotfiles
 ├── hosts/
 │   ├── common.nix                     # Shared config (Plasma, gaming, SSH…)
 │   ├── amd.nix                        # AMD GPU + microcode
 │   └── nvidia.nix                     # NVIDIA GPU + proprietary driver
-├── dotfiles/
-│   └── fish/
-│       ├── config.fish
-│       └── conf.d/
-│           └── functions.fish
+├── nixsec/
+│   ├── hardware-configuration.nix     # cp from /etc/nixos
+│   └── secrets.nix                    # Full name, email, locale etc.
+├── dotfiles/                          # Standard dotfiles, symlinked to ~/.config
+│   ├── fish/
 │   └── ...
 ├── devshells/
 │   ├── go.nix                         # Go toolchain + tools
 │   └── rust.nix                       # Rust via rustup + tools
-└── nixsec/
-    ├── hardware-configuration.nix     # cp from /etc/nixos
-    └── secrets.nix                    # Full name, email, locale etc.
+├── deploy.sh                          # Syncs repo → /etc/nixos
+└── .gitignore
+
 ```
 
 ## secrets.nix
@@ -80,9 +78,6 @@ separate `gitconfig` file is needed.
   hostname = "my-hostname";   # used for networking.hostName
   gpu      = "amd";           # host file to load: amd or nvidia
 
-  # Nixos config path
-  nixosConfigPath = "${HOME}mynix";
-
   # SSH public key for authorized_keys
   sshPublicKey = "ssh-ed25519 AAAA... your-key-comment";
 }
@@ -111,50 +106,124 @@ use flake /etc/nixos#go
 
 ### Aliases
 
+**Navigation**
 | Alias | Does |
 | --- | --- |
 | `..` / `...` / `....` | cd up 1 / 2 / 3 levels |
+
+**LS / Eza**
+| Alias | Does |
+| --- | --- |
 | `ls` | `eza` with icons, directories first |
 | `ll` | `eza -la` with icons and git status |
-| `lt` / `lta` | tree view 2 levels, with/without hidden |
+| `lt` | tree view 2 levels with icons |
+| `lta` | tree view 2 levels with icons, including hidden files |
 | `tree` | `eza` tree, all files, excluding `.git` |
+
+**Modern replacements**
+| Alias | Does |
+| --- | --- |
 | `cat` | `bat` with syntax highlighting |
-| `grep` / `find` | `ripgrep` / `fd` |
-| `top` / `df` / `du` | `btop` / `duf` / `gdu` |
+| `grep` | `ripgrep` (rg) |
+| `find` | `fd` |
+| `top` | `btop` |
+| `df` | `duf` |
+| `du` | `gdu` |
+
+**Editors**
+| Alias | Does |
+| --- | --- |
 | `mi` | `micro` |
 | `vi` / `vim` | `nvim` |
 | `sv` | `sudo nvim` |
-| `g` / `gs` / `ga` / `gaa` | `git` / `status` / `add` / `add -A` |
-| `gc` / `gcm` / `gca` | `commit` / `commit -m` / `commit --amend` |
-| `gco` / `gcob` | `checkout` / `checkout -b` |
-| `gpl` / `gps` / `gpsu` | `pull` / `push` / push and set upstream |
-| `gl` / `gd` / `gds` | log graph / `diff` / `diff --staged` |
-| `grb` / `gst` / `gstp` | `rebase` / `stash` / `stash pop` |
+
+**Git**
+| Alias | Does |
+| --- | --- |
+| `g` | `git` |
+| `gs` | `git status` |
+| `ga` | `git add` |
+| `gaa` | `git add -A` |
+| `gc` | `git commit` |
+| `gcm` | `git commit -m` |
+| `gca` | `git commit --amend` |
+| `gco` | `git checkout` |
+| `gcob` | `git checkout -b` |
+| `gpl` | `git pull` |
+| `gps` | `git push` |
+| `gpsu` | `git push --set-upstream origin (git branch --show-current)` |
+| `gl` | `git log --oneline --graph --decorate` |
+| `gd` | `git diff` |
+| `gds` | `git diff --staged` |
+| `grb` | `git rebase` |
+| `gst` | `git stash` |
+| `gstp` | `git stash pop` |
 | `lg` | `lazygit` |
-| `nrs` / `nrt` / `nrb` | rebuild switch / test / boot (from repo root) |
-| `nup` | `nix flake update` + rebuild switch |
-| `ngens` | list system generations |
-| `nrollback` | roll back to previous generation |
-| `nfu` / `nfc` / `ngc` | flake update / check / garbage-collect |
-| `ndev` | `nix develop` |
-| `gob` / `got` / `gotr` / `gotv` | `go build` / `test` / `test -race` / `test -v` |
-| `gom` / `gor` / `gogen` | `go mod tidy` / `go run .` / `go generate` |
-| `cb` / `cr` / `ct` / `cta` | `cargo build` / `run` / `test` / `test --include-ignored` |
-| `cc` / `ccl` / `cft` / `cw` | `cargo check` / `clippy` / `fmt` / `watch` |
-| `ports` / `myip` / `reload` | listening ports / external IP / restart fish |
+
+**Go**
+| Alias | Does |
+| --- | --- |
+| `gob` | `go build ./...` |
+| `got` | `go test ./...` |
+| `gotr` | `go test -race ./...` |
+| `gotv` | `go test -v ./...` |
+| `gom` | `go mod tidy` |
+| `gor` | `go run .` |
+| `gogen` | `go generate ./...` |
+
+**Cargo / Rust**
+| Alias | Does |
+| --- | --- |
+| `cb` | `cargo build` |
+| `cr` | `cargo run` |
+| `ct` | `cargo test` |
+| `cta` | `cargo test -- --include-ignored` |
+| `cc` | `cargo check` |
+| `ccl` | `cargo clippy` |
+| `cft` | `cargo fmt` |
+| `cw` | `cargo watch` |
+
+**Misc**
+| Alias | Does |
+| --- | --- |
+| `ports` | `ss -tulnp` — show listening ports |
+| `myip` | `curl -s https://ifconfig.me` — show external IP |
+| `reload` | `exec fish` — restart fish session |
 
 ### Functions
 
+**NixOS rebuild helpers**
 | Function | Does |
 | --- | --- |
+| `nrs [path] [host]` | `nixos-rebuild switch` — defaults to `/etc/nixos` and current hostname |
+| `nrt [path] [host]` | `nixos-rebuild test` |
+| `nrb [path] [host]` | `nixos-rebuild boot` |
+| `nup [path] [host]` | `nix flake update` + rebuild switch (runs in flake directory) |
+| `nfu [path]` | `nix flake update` |
+| `nfc [path]` | `nix flake check` |
+| `nrollback` | roll back to previous generation |
+| `ngens` | list system generations |
 | `ndiff` | diff current system vs what the next rebuild would produce |
-| `nsh <pkg>` | `nix shell nixpkgs#<pkg>` — ephemeral shell |
-| `dev [name]` | `nix develop [.#name]` |
+| `nsh <pkg>` | ephemeral `nix shell nixpkgs#<pkg>` |
+| `dev [name]` | `nix develop [.#name]` — without args runs default devshell |
+| `ngc <age>` | delete generations older than `<age>` (e.g., `7d`, `30d`) and garbage collect |
+
+**Filesystem helpers**
+| Function | Does |
+| --- | --- |
 | `mkcd <dir>` | `mkdir -p` + `cd` in one step |
-| `fcd` | fuzzy `cd` into any subdirectory using fzf |
-| `fe` | fuzzy open a file in `$EDITOR` using fzf |
+| `fcd` | fuzzy `cd` into any subdirectory using `fzf` |
+| `fe` | fuzzy open a file in `$EDITOR` using `fzf` |
 | `bak <file>` | copy `<file>` to `<file>.bak` |
-| `ex <archive>` | extract any archive (tar, zip, 7z, zst, gz…) |
+| `ex <archive>` | extract any archive (tar, zip, 7z, zst, gz, bz2…) |
+
+**Git**
+| Function | Does |
+| `gsquash <N> [msg]` | squash last N commits into a single commit; uses combined messages or custom message if provided |
+
+**Misc**
+| Function | Does |
+| --- | --- |
 | `every <s> <cmd>` | repeat `<cmd>` every `<s>` seconds |
 | `pr` | push current branch + `gh pr create --fill` |
 | `paths` | print `$PATH` one entry per line |

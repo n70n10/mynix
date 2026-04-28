@@ -155,8 +155,8 @@
     wl-clipboard
 
     # Gaming
-    lutris
-    heroic
+    # lutris                     # this is pulling openldap with fails to build miserably
+    # heroic                     # install lutris and heroic as flatpaks
     mangohud
     gamemode
   ];

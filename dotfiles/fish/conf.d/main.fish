@@ -51,18 +51,6 @@ abbr -a gst  'git stash'
 abbr -a gstp 'git stash pop'
 abbr -a lg   'lazygit'
 
-# nix
-abbr -a nrs  'sudo nixos-rebuild switch --flake .'
-abbr -a nrt  'sudo nixos-rebuild test --flake .'
-abbr -a nrb  'sudo nixos-rebuild boot --flake .'
-abbr -a nup  'nix flake update && sudo nixos-rebuild switch --flake .'
-abbr -a ngens 'sudo nix-env --list-generations --profile /nix/var/nix/profiles/system'
-abbr -a nrollback 'sudo nixos-rebuild switch --rollback'
-abbr -a nfu  'nix flake update'
-abbr -a nfc  'nix flake check'
-abbr -a ngc  'sudo nix-collect-garbage -d'
-abbr -a ndev 'nix develop'
-
 # go
 abbr -a gob   'go build ./...'
 abbr -a got   'go test ./...'

@@ -22,12 +22,12 @@
         specialArgs = sharedArgs // { hostname = secrets.hostname; };
         modules = [
           ./nixsec/hardware-configuration.nix
-          ./hosts/common.nix
+          ./hosts/hosts.nix
           ./hosts/${secrets.gpu}.nix
           inputs.home-manager.nixosModules.home-manager {
             home-manager.useGlobalPkgs   = true;
             home-manager.useUserPackages = true;
-            home-manager.users.${secrets.username} = import ./home.nix;
+            home-manager.users.${secrets.username} = import ./home/home.nix;
             home-manager.extraSpecialArgs = sharedArgs;
           }
         ];
@@ -36,7 +36,7 @@
     {
       nixosConfigurations = {
         "${secrets.hostname}" = mkHost { system = "x86_64-linux"; };
-        default              = mkHost { system = "x86_64-linux"; };
+        default               = mkHost { system = "x86_64-linux"; };
       };
 
       devShells.x86_64-linux =

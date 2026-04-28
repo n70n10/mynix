@@ -19,9 +19,6 @@
   hostname = "my-hostname";   # used for networking.hostName
   gpu      = "amd";           # host file to load: amd or nvidia
 
-  # Nixos config path
-  nixosConfigPath = "${HOME}mynix";
-
   # SSH public key for authorized_keys
   sshPublicKey = "ssh-ed25519 AAAA... your-key-comment";
 }
